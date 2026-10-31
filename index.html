@@ -8,7 +8,7 @@
 body{margin:0;background:#555;font-family:sans-serif}
 #bar{position:sticky;top:0;background:#222;padding:10px;text-align:center;z-index:5}
 #bar a{color:#fff;background:#1a56db;padding:8px 18px;border-radius:8px;text-decoration:none}
-#pages canvas{display:block;margin:10px auto;max-width:100%;height:auto;background:#fff}
+.pg{display:block;margin:10px auto;background:#fff}
 #msg{color:#fff;text-align:center;padding:20px}
 </style>
 </head>
@@ -21,18 +21,53 @@ body{margin:0;background:#555;font-family:sans-serif}
 var url = encodeURI("ترجمة اتفاقية الحدود مع غلاف للقراءة.pdf");
 document.getElementById("dl").href = url;
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-pdfjsLib.getDocument(url).promise.then(async function(pdf){
+
+var dpr = Math.min(Math.max(window.devicePixelRatio || 2, 2), 3);
+var cssW = Math.min(document.documentElement.clientWidth || window.innerWidth, 900);
+var pdfDoc = null;
+
+function renderPage(c) {
+  if (c.dataset.r === "1") return;
+  c.dataset.r = "1";
+  pdfDoc.getPage(+c.dataset.n).then(function (p) {
+    var w0 = p.getViewport({ scale: 1 }).width;
+    var vp = p.getViewport({ scale: (cssW / w0) * dpr });
+    c.width = vp.width;
+    c.height = vp.height;
+    return p.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+  });
+}
+
+function clearPage(c) {
+  if (c.dataset.r !== "1") return;
+  c.dataset.r = "0";
+  c.width = 0;
+  c.height = 0;
+}
+
+pdfjsLib.getDocument(url).promise.then(async function (pdf) {
+  pdfDoc = pdf;
   document.getElementById("msg").remove();
-  for (var i=1;i<=pdf.numPages;i++){
+  var holder = document.getElementById("pages");
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) renderPage(e.target); else clearPage(e.target);
+    });
+  }, { rootMargin: "1500px 0px" });
+  for (var i = 1; i <= pdf.numPages; i++) {
     var p = await pdf.getPage(i);
-    var v = p.getViewport({scale:1.5});
+    var vp = p.getViewport({ scale: 1 });
     var c = document.createElement("canvas");
-    c.width=v.width; c.height=v.height;
-    document.getElementById("pages").appendChild(c);
-    await p.render({canvasContext:c.getContext("2d"),viewport:v}).promise;
+    c.className = "pg";
+    c.dataset.n = i;
+    c.dataset.r = "0";
+    c.style.width = cssW + "px";
+    c.style.height = (cssW * vp.height / vp.width) + "px";
+    holder.appendChild(c);
+    io.observe(c);
   }
-}).catch(function(){
-  document.getElementById("msg").innerHTML='<a href="'+url+'" style="color:#fff">اضغط هنا لفتح الكتاب</a>';
+}).catch(function () {
+  document.getElementById("msg").innerHTML = '<a href="' + url + '" style="color:#fff">اضغط هنا لفتح الكتاب</a>';
 });
 </script>
 </body>
