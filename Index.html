@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ترجمة اتفاقية الحدود</title>
+<style>
+body{margin:0;background:#555;font-family:sans-serif}
+#bar{position:sticky;top:0;background:#222;padding:10px;text-align:center;z-index:5}
+#bar a{color:#fff;background:#1a56db;padding:8px 18px;border-radius:8px;text-decoration:none}
+#pages canvas{display:block;margin:10px auto;max-width:100%;height:auto;background:#fff}
+#msg{color:#fff;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<div id="bar"><a id="dl" download>تحميل الكتاب</a></div>
+<div id="msg">جاري التحميل...</div>
+<div id="pages"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+var url = encodeURI("ترجمة اتفاقية الحدود مع غلاف للقراءة.pdf");
+document.getElementById("dl").href = url;
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+pdfjsLib.getDocument(url).promise.then(async function(pdf){
+  document.getElementById("msg").remove();
+  for (var i=1;i<=pdf.numPages;i++){
+    var p = await pdf.getPage(i);
+    var v = p.getViewport({scale:1.5});
+    var c = document.createElement("canvas");
+    c.width=v.width; c.height=v.height;
+    document.getElementById("pages").appendChild(c);
+    await p.render({canvasContext:c.getContext("2d"),viewport:v}).promise;
+  }
+}).catch(function(){
+  document.getElementById("msg").innerHTML='<a href="'+url+'" style="color:#fff">اضغط هنا لفتح الكتاب</a>';
+});
+</script>
+</body>
+</html>
