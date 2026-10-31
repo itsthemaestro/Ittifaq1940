@@ -13,7 +13,7 @@ body{margin:0;background:#555;font-family:sans-serif}
 </style>
 </head>
 <body>
-<div id="bar"><a id="dl" download>تحميل الكتاب</a></div>
+<div id="bar"><a id="dl" download>تحميل الكتاب</a> <a id="op" target="_blank" style="background:#444">فتح بشكله الأصلي</a></div>
 <div id="msg">جاري التحميل...</div>
 <div id="pages"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -45,7 +45,8 @@ function clearPage(c) {
   c.height = 0;
 }
 
-pdfjsLib.getDocument(url).promise.then(async function (pdf) {
+document.getElementById("op").href = url;
+pdfjsLib.getDocument({ url: url, disableFontFace: true }).promise.then(async function (pdf) {
   pdfDoc = pdf;
   document.getElementById("msg").remove();
   var holder = document.getElementById("pages");
